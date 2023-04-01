@@ -6,7 +6,7 @@ This repository holds personalized Docker images that can be utilized as action 
 
 | Build status                                                                                                                                                                             | Image Repository                                                                                 | Description                            |
 |------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------|----------------------------------------|
-| [![build: gitops](https://github.com/maandr/action-runners/actions/workflows/build-gitops.yaml/badge.svg)](https://github.com/maandr/action-runners/actions/workflows/build-gitops.yaml) | [ghcr.io/maandr/action-runners/gitops](https://github.com/users/maandr/packages/container/package/action-runners%2Fgitops) | A runner designed for GitOps projects. |
+| [![build: gitops](https://github.com/maandr/action-runners/actions/workflows/build-gitops.yaml/badge.svg)](https://github.com/maandr/action-runners/actions/workflows/build-gitops.yaml) | [`ghcr.io/maandr/action-runners/gitops`](https://github.com/users/maandr/packages/container/package/action-runners%2Fgitops) | A runner designed for GitOps projects. |
 
 ## Usage in GitHub Actions
 
