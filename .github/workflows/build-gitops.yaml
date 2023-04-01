@@ -3,13 +3,9 @@ on:
   push:
     paths:
       - "gitops/**"
-    paths-ignore:
-      - "gitops/README.md"
   pull_request:
     paths:
       - "gitops/**"
-    paths-ignore:
-      - "gitops/README.md"
   workflow_dispatch:
 
 concurrency:
