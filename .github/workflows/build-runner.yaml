@@ -1,5 +1,11 @@
 name: Build Action Runner
 on:
+  push:
+    paths-ignore:
+      - ".github/**"
+      - "README.md"
+      - ".gitignore"
+      - ".editorconfig"
   pull_request:
     paths-ignore:
       - ".github/**"
@@ -59,7 +65,7 @@ jobs:
         id: docker-build-and-push
         uses: docker/build-push-action@v3.3.0
         with:
-          push: true
+          push: ${{ github.event_name == 'push' }}
           context: ./${{ matrix.runner-image }}/
           file: ./${{ matrix.runner-image }}/Dockerfile
           tags: ${{ steps.docker-meta.outputs.tags }}
