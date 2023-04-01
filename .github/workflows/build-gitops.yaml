@@ -1,4 +1,4 @@
-name: "Build Action Runner: gitops"
+name: "build: gitops"
 on:
   push:
     branches: [ main ]

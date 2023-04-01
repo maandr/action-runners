@@ -1,4 +1,4 @@
-name: "Build Action Runner"
+name: "build"
 on:
   workflow_call:
     inputs:
@@ -14,6 +14,7 @@ on:
 
 jobs:
   build-action-runners:
+    name: "Build ${{ inputs.runner }} runner"
     if: always()
     runs-on: ubuntu-latest
     steps:
