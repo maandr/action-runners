@@ -14,7 +14,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  build-runner:
+    name: "build runner"
     uses: ./.github/workflows/build-runner.yaml
     with:
       runner: gitops

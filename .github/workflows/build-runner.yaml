@@ -10,7 +10,7 @@ on:
 
 jobs:
   build-runner:
-    name: "${{ inputs.runner }} runner"
+    name: "${{ inputs.runner }}"
     if: always()
     runs-on: ubuntu-latest
     steps:
