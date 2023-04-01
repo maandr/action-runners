@@ -1,30 +1,19 @@
-name: Build Action Runner
+name: "Build Action Runner"
 on:
-  push:
-    paths-ignore:
-      - ".github/**"
-      - "README.md"
-      - ".gitignore"
-      - ".editorconfig"
-  pull_request:
-    paths-ignore:
-      - ".github/**"
-      - "README.md"
-      - ".gitignore"
-      - ".editorconfig"
-  workflow_dispatch:
+  workflow_call:
+    inputs:
+      runner:
+        description: 'The runner to build (e.g. gitops)'
+        default: 'gitops'
+        required: true
+        type: string
 
-# Cancel already running workflow when PR got updated
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+#concurrency:
+#  group: ${{ github.workflow }}-${{ github.ref }}
+#  cancel-in-progress: true
 
 jobs:
   build-action-runners:
-    strategy:
-      fail-fast: false
-      matrix:
-        runner-image: [ gitops ]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -52,7 +41,7 @@ jobs:
         id: docker-meta
         uses: docker/metadata-action@v4.3.0
         with:
-          images: ghcr.io/${{ github.repository }}/${{ matrix.runner-image }}
+          images: ghcr.io/${{ github.repository }}/${{ inputs.runner }}
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}
@@ -66,8 +55,8 @@ jobs:
         uses: docker/build-push-action@v3.3.0
         with:
           push: ${{ github.event_name == 'push' }}
-          context: ./${{ matrix.runner-image }}/
-          file: ./${{ matrix.runner-image }}/Dockerfile
+          context: ./${{ inputs.runner }}/
+          file: ./${{ inputs.runner }}/Dockerfile
           tags: ${{ steps.docker-meta.outputs.tags }}
           labels: ${{ steps.docker-meta.outputs.labels }}
           cache-from: type=gha
