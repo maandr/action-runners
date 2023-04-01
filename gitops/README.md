@@ -6,3 +6,5 @@ The runner includes useful tools necessary for GitOps projects.
 
 - kubectl
 - kubeconform
+- kustomize
+- trivy
