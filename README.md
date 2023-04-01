@@ -1,14 +1,12 @@
 # Action Runners
 
-[![Build Action Runner](https://github.com/maandr/action-runners/actions/workflows/build-runner.yaml/badge.svg)](https://github.com/maandr/action-runners/actions/workflows/build-runner.yaml)
-
 This repository holds personalized Docker images that can be utilized as action runners, such as in GitHub Action Workflows, for future purposes.
 
 ## Available Runners
 
-| Runner                  | Description                            | Image                                                                                          | Latest Version                                                                                   |
-|-------------------------|----------------------------------------|------------------------------------------------------------------------------------------------| --- |
-| [gitops](gitops/) | A runner designed for GitOps projects. | [packages](https://github.com/users/maandr/packages/container/package/action-runners%2Fgitops) | `1.0.0`|
+| Build status                                                                                                                                                                             | Description                            | Image                                                                                            | Latest Version                                                                                   |
+|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------|--------------------------------------------------------------------------------------------------| --- |
+| [![build: gitops](https://github.com/maandr/action-runners/actions/workflows/build-gitops.yaml/badge.svg)](https://github.com/maandr/action-runners/actions/workflows/build-gitops.yaml) | A runner designed for GitOps projects. | [repository](https://github.com/users/maandr/packages/container/package/action-runners%2Fgitops) | `1.0.0`|
 
 ## Usage in GitHub Actions
 
