@@ -1,7 +1,7 @@
 FROM ubuntu:latest
 
 # install essential tools
-RUN apt update && apt install -y curl sudo gnupg2
+RUN apt update && apt install -y curl sudo gnupg2 wget apt-transport-https lsb-release
 
 # install kubectl
 RUN sudo curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg \
@@ -13,7 +13,6 @@ RUN sudo curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg \
 
 ENV KUSTOMIZE_VERSION=5.0.1
 ENV KUBECONFORM_VERSION=0.6.1
-ENV TRIVY_VERSION=0.39.0
 
 # install kustomize
 RUN sudo curl -sSL "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" > /tmp/install_kustomize.sh \
@@ -25,5 +24,7 @@ RUN sudo curl -sSL https://github.com/yannh/kubeconform/releases/download/v${KUB
     | sudo tar zxf - -C /usr/local/bin
 
 # install trivy
-RUN sudo curl -sSL https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-ARM64.tar.gz \
-    | sudo tar zxf - -C /usr/local/bin
+RUN sudo wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor | sudo tee /usr/share/keyrings/trivy.gpg > /dev/null \
+  && sudo echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list \
+  && sudo apt-get update -y \
+  && sudo apt-get install trivy
