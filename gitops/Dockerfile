@@ -11,10 +11,13 @@ RUN sudo curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg \
     && sudo apt-get update -y \
 	  && sudo apt-get install -y kubectl
 
+ENV KUSTOMIZE_VERSION=5.0.1
+ENV KUBECONFORM_VERSION=0.6.1
+
 # install kustomize
-RUN sudo curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" \
-    | bash
+RUN sudo curl -sSL https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv${KUSTOMIZE_VERSION}/kustomize_v${KUSTOMIZE_VERSION}_linux_arm64.tar.gz \
+    | sudo tar zxf - -C /usr/local/bin
 
 # install kubeconform
-RUN sudo curl -sSL https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz \
+RUN sudo curl -sSL https://github.com/yannh/kubeconform/releases/download/v${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz \
     | sudo tar zxf - -C /usr/local/bin
