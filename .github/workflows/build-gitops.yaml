@@ -1,6 +1,7 @@
 name: "Build Action Runner: gitops"
 on:
   push:
+    branches: [ main ]
     paths:
       - "gitops/**"
   pull_request:
@@ -14,7 +15,7 @@ concurrency:
 
 jobs:
   build-action-runners:
-    uses: ./.github/actions/build-action.yaml
+    uses: ./.github/workflows/build-runner.yaml
     with:
       runner: gitops
     secrets: inherit
