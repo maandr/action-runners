@@ -1,5 +1,8 @@
 FROM ubuntu:latest
 
+ARG KUSTOMIZE_VERSION=5.0.1
+ARG KUBECONFORM_VERSION=0.6.1
+
 # install essential tools
 RUN apt update && apt install -y curl sudo gnupg2 wget apt-transport-https lsb-release
 
@@ -10,9 +13,6 @@ RUN sudo curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg \
     | sudo tee -a /etc/apt/sources.list.d/kubernetes.list \
     && sudo apt-get update -y \
 	  && sudo apt-get install -y kubectl
-
-ENV KUSTOMIZE_VERSION=5.0.1
-ENV KUBECONFORM_VERSION=0.6.1
 
 # install kustomize
 RUN sudo curl -sSL "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" > /tmp/install_kustomize.sh \
@@ -28,3 +28,6 @@ RUN sudo wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | g
   && sudo echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list \
   && sudo apt-get update -y \
   && sudo apt-get install trivy
+
+# set timezone
+ENV TZ="Europe/Berlin"
