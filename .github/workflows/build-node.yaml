@@ -1,0 +1,23 @@
+name: "build: gitops"
+on:
+  push:
+    branches: [ main ]
+    tags: [ v* ]
+    paths:
+      - "node/**"
+  pull_request:
+    paths:
+      - "node/**"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-runner:
+    name: "build runner"
+    uses: ./.github/workflows/build-runner.yaml
+    with:
+      runner: node
+    secrets: inherit
