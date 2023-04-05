@@ -1,4 +1,4 @@
-name: "build: gitops"
+name: "build: node"
 on:
   push:
     branches: [ main ]
