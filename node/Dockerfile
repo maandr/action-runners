@@ -16,6 +16,9 @@ RUN sudo curl -sL https://deb.nodesource.com/setup_${NODE_VERSION}.x | sudo -E b
     && sudo apt-get update -y \
     && sudo apt-get install -y nodejs
 
+# Enable corepack (enables yarn)
+RUN sudo corepack enable
+
 # install trivy
 RUN sudo wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor | sudo tee /usr/share/keyrings/trivy.gpg > /dev/null \
   && sudo echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list \
