@@ -87,7 +87,7 @@ jobs:
       matrix:
         image: ${{ fromJson(needs.build-matrix.outputs.available_images) }}
     with:
-      tags: ghcr.io/${{ github.repository }}/${{ matrix.image }}:${{ needs.version.outputs.version }},ghcr.io/${{ github.repository }}/${{ matrix.image }}:${{ needs.version.outputs.version_minor }},ghcr.io/${{ github.repository }}/${{ matrix.image }}:${{ needs.version.outputs.version_major }}
+      tags: ghcr.io/${{ github.repository }}/${{ matrix.image }}:${{ needs.version.outputs.version }},ghcr.io/${{ github.repository }}/${{ matrix.image }}:${{ needs.version.outputs.version_minor }},ghcr.io/${{ github.repository }}/${{ matrix.image }}:${{ needs.version.outputs.version_major }},ghcr.io/${{ github.repository }}/${{ matrix.image }}:latest
       labels: ${{ needs.version.outputs.version }},${{ needs.version.outputs.version_minor }},${{ needs.version.outputs.version_major }}
       file: ./${{ matrix.image }}/Dockerfile
       context: ./${{ matrix.image }}
