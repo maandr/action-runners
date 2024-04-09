@@ -26,6 +26,7 @@ jobs:
         id: build-matrix
         shell: bash
         run: |
+          git fetch origin main
           changed_images=""
           for file in $(git diff --name-only origin/main HEAD); do
             if [ "$(basename "$file")" == "Dockerfile" ]; then
@@ -39,11 +40,11 @@ jobs:
 
   ci:
     needs: [build-matrix]
+    if: ${{ needs.build-matrix.outputs.changed_images != '[]' }}
     strategy:
       fail-fast: false
       matrix:
         image_dir: ${{ fromJson(needs.build-matrix.outputs.changed_images) }}
-    if: always()
     uses: maandr/github-actions/.github/workflows/ci-docker-image.yaml@v3
     with:
       context: ${{ matrix.image_dir }}
