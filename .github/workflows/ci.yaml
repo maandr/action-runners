@@ -27,21 +27,23 @@ jobs:
         shell: bash
         run: |
           changed_images=""
-          for file in $(git diff --name-only); do
+          for file in $(git diff --name-only origin/main HEAD); do
             if [ "$(basename "$file")" == "Dockerfile" ]; then
               changed_images+="$(dirname "$file"), "
             fi
           done
+          chagned_images="[${changed_images%, }]"
+          echo "$chagned_images"
 
-          echo "changed_images=[${changed_images%, }]" >> "$GITHUB_OUTPUT"
+          echo "changed_images=$chagned_images" >> "$GITHUB_OUTPUT"
 
   ci:
     needs: [build-matrix]
     strategy:
       fail-fast: false
       matrix:
-        environment: ${{ fromJson(needs.build-matrix.outputs.changed_images) }}
+        image_dir: ${{ fromJson(needs.build-matrix.outputs.changed_images) }}
     if: always()
     uses: maandr/github-actions/.github/workflows/ci-docker-image.yaml@v3
     with:
-      context: ${{ matrix.environment }}
+      context: ${{ matrix.image_dir }}
