@@ -15,7 +15,7 @@ RUN apt update && apt install -y \
     sudo
 
 # install kustomize
-RUN sudo curl -sSL https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v${VERSION_KUSTOMIZE}/kustomize_v${VERSION_KUSTOMIZE}_linux_arm64.tar.gz \
+RUN sudo curl -sSL https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v${VERSION_KUSTOMIZE}/kustomize_v${VERSION_KUSTOMIZE}_linux_amd64.tar.gz \
     | sudo tar zxf - -C /usr/local/bin
 
 # install kubeconform
@@ -23,16 +23,16 @@ RUN sudo curl -sSL https://github.com/yannh/kubeconform/releases/download/v${VER
     | sudo tar zxf - -C /usr/local/bin
 
 # install trivy
-RUN sudo curl -sSL https://github.com/aquasecurity/trivy/releases/download/v${VERSION_TRIVY}/trivy_${VERSION_TRIVY}_Linux-ARM64.tar.gz \
+RUN sudo curl -sSL https://github.com/aquasecurity/trivy/releases/download/v${VERSION_TRIVY}/trivy_${VERSION_TRIVY}_Linux-64bit.tar.gz \
     | sudo tar zxf - -C /usr/local/bin
 
 # install jq
-RUN sudo curl -sSL -o /usr/local/bin/jq https://github.com/jqlang/jq/releases/download/jq-${VERSION_JQ}/jq-linux-arm64 \
+RUN sudo curl -sSL -o /usr/local/bin/jq https://github.com/jqlang/jq/releases/download/jq-${VERSION_JQ}/jq-linux-amd64 \
     && sudo chmod +x /usr/local/bin/jq
 
 # install yq
-RUN sudo curl -sSL https://github.com/mikefarah/yq/releases/download/v${VERSION_YQ}/yq_linux_arm64.tar.gz \
-    | sudo tar zxf - -C /usr/local/bin && sudo mv /usr/local/bin/yq_linux_arm64 /usr/local/bin/yq
+RUN sudo curl -sSL https://github.com/mikefarah/yq/releases/download/v${VERSION_YQ}/yq_linux_amd64.tar.gz \
+    | sudo tar zxf - -C /usr/local/bin && sudo mv /usr/local/bin/yq_linux_amd64 /usr/local/bin/yq
 
 # set timezone
 ENV TZ="Europe/Berlin"
