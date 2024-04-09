@@ -57,6 +57,9 @@ jobs:
     outputs:
       available_images: ${{ steps.build-matrix.outputs.available_images }}
     steps:
+      - name: "⏬ Checkout Git Repository"
+        uses: actions/checkout@v4
+
       - name: "🤖 Detect docker images"
         id: build-matrix
         shell: bash
