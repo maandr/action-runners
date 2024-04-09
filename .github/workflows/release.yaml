@@ -52,9 +52,9 @@ jobs:
           version_minor=${version%.*}
           version_major=${version%%.*}
 
-          echo "version=$version" >> $GITHUB_ENV
-          echo "version_minor=$version_minor" >> $GITHUB_ENV
-          echo "version_major=$version_major" >> $GITHUB_ENV
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "version_minor=$version_minor" >> "$GITHUB_OUTPUT"
+          echo "version_major=$version_major" >> "$GITHUB_OUTPUT"
 
   release:
     needs: [version]
