@@ -47,4 +47,4 @@ jobs:
         image_dir: ${{ fromJson(needs.build-matrix.outputs.changed_images) }}
     uses: maandr/github-actions/.github/workflows/ci-docker-image.yaml@v3
     with:
-      context: ${{ matrix.image_dir }}
+      context: ./${{ matrix.image_dir }}
