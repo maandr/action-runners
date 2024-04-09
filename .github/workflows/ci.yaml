@@ -1,0 +1,44 @@
+name: '🧪 CI'
+on:
+  pull_request:
+    branches: [ main ]
+    paths-ignore:
+      - '.editorconfig'
+      - '.github/dependabot.yaml'
+      - '.github/workflows/cd.yaml'
+      - '.gitignore'
+      - 'README.md'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      changed_images: ${{ steps.build-matrix.outputs.changed_images }}
+    steps:
+      - name: "🤖 Generate build matrix"
+        id: build-matrix
+        shell: bash
+        run: |
+          changed_images=""
+          for file in $(git diff --name-only); do
+            if [ "$(basename "$file")" == "Dockerfile" ]; then
+              changed_images+="$(dirname "$file")"
+            fi
+          done
+
+          echo "changed_images=$changed_images" >> "$GITHUB_OUTPUT"
+
+  ci:
+    needs: [build-matrix]
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: ${{ fromJson(needs.build-matrix.outputs.changed_images) }}
+    if: always()
+    uses: maandr/github-actions/.github/workflows/ci-docker-image.yaml@v3
+    with:
+      context: ${{ matrix.environment }}

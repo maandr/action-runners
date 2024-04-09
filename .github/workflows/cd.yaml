@@ -1,0 +1,45 @@
+name: "🚀 CD"
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - "**/Dockerfile"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      available_images: ${{ steps.build-matrix.outputs.available_images }}
+    steps:
+      - name: "🤖 Detect docker images"
+        id: build-matrix
+        shell: bash
+        run: |
+          available_images=$(find . -type f -name "Dockerfile" -exec dirname {} \; | sort -u)
+          echo "available_images=$available_images" >> "$GITHUB_OUTPUT"
+
+
+  image-tags:
+    uses: maandr/github-actions/.github/workflows/cd-generate-image-tags.yaml@v3
+    with:
+      image: ghcr.io/${{ github.repository }}
+
+  build-and-push:
+    needs: [generate-image-tags, build-matrix]
+    uses: maandr/github-actions/.github/workflows/cd-ghcr.yaml@v3
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: ${{ fromJson(needs.build-matrix.outputs.available_images) }}
+    if: always()
+    with:
+      tags: ${{ needs.generate-image-tags.outputs.tags }}
+      labels: ${{ needs.generate-image-tags.outputs.labels }}
+      context: ${{ matrix.environment }}
+    secrets:
+      GHCR_PAT: ${{ secrets.CONTAINER_REGISTRY_PAT }}
