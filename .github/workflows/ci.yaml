@@ -27,16 +27,15 @@ jobs:
         shell: bash
         run: |
           git fetch origin main
-          changed_images=""
+          hits=""
           for file in $(git diff --name-only origin/main HEAD); do
             if [ "$(basename "$file")" == "Dockerfile" ]; then
-              changed_images+="'$(dirname "$file")', "
+              hits+="'$(dirname "$file")', "
             fi
           done
-          chagned_images="[${changed_images%, }]"
-          echo "$chagned_images"
-
-          echo "changed_images=$chagned_images" >> "$GITHUB_OUTPUT"
+          hits="[${hits%, }]"
+          echo "$hits"
+          echo "changed_images=$hits" >> "$GITHUB_OUTPUT"
 
   ci:
     needs: [build-matrix]

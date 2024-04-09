@@ -20,9 +20,13 @@ jobs:
         id: build-matrix
         shell: bash
         run: |
-          available_images=$(find . -type f -name "Dockerfile" -exec dirname {} \; | sort -u)
-          echo "available_images=$available_images" >> "$GITHUB_OUTPUT"
-
+          hits=""
+          for file in $(find . -type f -name "Dockerfile" -exec dirname {} \; | sort -u); do
+            hits+="'$file', "
+          done
+          hits="[${hits%, }]"
+          echo "$hits"
+          echo "available_images=$hits" >> "$GITHUB_OUTPUT"
 
   image-tags:
     uses: maandr/github-actions/.github/workflows/cd-generate-image-tags.yaml@v3
@@ -31,15 +35,16 @@ jobs:
 
   build-and-push:
     needs: [generate-image-tags, build-matrix]
+    if: ${{ needs.build-matrix.outputs.available_images != '[]' }}
     uses: maandr/github-actions/.github/workflows/cd-ghcr.yaml@v3
     strategy:
       fail-fast: false
       matrix:
-        environment: ${{ fromJson(needs.build-matrix.outputs.available_images) }}
-    if: always()
+        image_dir: ${{ fromJson(needs.build-matrix.outputs.available_images) }}
     with:
       tags: ${{ needs.generate-image-tags.outputs.tags }}
       labels: ${{ needs.generate-image-tags.outputs.labels }}
-      context: ${{ matrix.environment }}
+      file: ./${{ matrix.image_dir }}/Dockerfile
+      context: ./${{ matrix.image_dir }}
     secrets:
       GHCR_PAT: ${{ secrets.CONTAINER_REGISTRY_PAT }}
