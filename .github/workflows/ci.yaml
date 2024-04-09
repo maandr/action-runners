@@ -19,6 +19,9 @@ jobs:
     outputs:
       changed_images: ${{ steps.build-matrix.outputs.changed_images }}
     steps:
+      - name: "⏬ Checkout Git Repository"
+        uses: actions/checkout@v4
+
       - name: "🤖 Generate build matrix"
         id: build-matrix
         shell: bash
@@ -26,11 +29,11 @@ jobs:
           changed_images=""
           for file in $(git diff --name-only); do
             if [ "$(basename "$file")" == "Dockerfile" ]; then
-              changed_images+="$(dirname "$file")"
+              changed_images+="$(dirname "$file"), "
             fi
           done
 
-          echo "changed_images=$changed_images" >> "$GITHUB_OUTPUT"
+          echo "changed_images=[${changed_images%, }]" >> "$GITHUB_OUTPUT"
 
   ci:
     needs: [build-matrix]
