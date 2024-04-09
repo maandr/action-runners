@@ -29,7 +29,5 @@ RUN sudo wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | g
   && sudo apt-get update -y \
   && sudo apt-get install trivy
 
-# install jq
-
 # set timezone
 ENV TZ="Europe/Berlin"
