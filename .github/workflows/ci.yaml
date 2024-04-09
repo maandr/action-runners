@@ -30,7 +30,7 @@ jobs:
           changed_images=""
           for file in $(git diff --name-only origin/main HEAD); do
             if [ "$(basename "$file")" == "Dockerfile" ]; then
-              changed_images+="$(dirname "$file"), "
+              changed_images+="'$(dirname "$file")', "
             fi
           done
           chagned_images="[${changed_images%, }]"
