@@ -59,6 +59,10 @@ jobs:
   release:
     needs: [version]
     runs-on: ubuntu-latest
+    steps:
+      - name: "⏬ Checkout Git Repository"
+        uses: actions/checkout@v4
+
       - name: "🏷️ Create Git Tags"
         shell: bash
         run: |
