@@ -1,0 +1,90 @@
+name: "🚀 Release"
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - "version"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      available_images: ${{ steps.build-matrix.outputs.available_images }}
+    steps:
+      - name: "⏬ Checkout Git Repository"
+        uses: actions/checkout@v4
+
+      - name: "🤖 Detect docker images"
+        id: build-matrix
+        shell: bash
+        run: |
+          hits=""
+          for file in $(find . -type f -name "Dockerfile"); do
+            hits+="'$(basename $(dirname "$file"))', "
+          done
+          hits="[${hits%, }]"
+          echo "$hits"
+          echo "available_images=$hits" >> "$GITHUB_OUTPUT"
+
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get-version.outputs.version }}
+      version_minor: ${{ steps.get-version.outputs.version_minor }}
+      version_major: ${{ steps.get-version.outputs.version_major }}
+    steps:
+      - name: "⏬ Checkout Git Repository"
+        uses: actions/checkout@v4
+
+      - name: "🧮 Get Release Version"
+        id: get-version
+        shell: bash
+        run: |
+          version=$(cat version)
+          version_minor=${version%.*}
+          version_major=${version%%.*}
+
+          echo "version=$version" >> $GITHUB_ENV
+          echo "version_minor=$version_minor" >> $GITHUB_ENV
+          echo "version_major=$version_major" >> $GITHUB_ENV
+
+  release:
+    needs: [version]
+    runs-on: ubuntu-latest
+      - name: "🏷️ Create Git Tags"
+        shell: bash
+        run: |
+          git tag --force v${{ needs.version.outputs.version }}
+          git tag --force v${{ needs.version.outputs.version_minor }}
+          git tag --force v${{ needs.version.outputs.version_major }}
+          git push --tags --force
+
+      - name: "🚀 Create GitHub Release"
+        uses: softprops/action-gh-release@v2.0.4
+        with:
+          tag_name: v${{ needs.version.outputs.version }}
+          name: ${{ needs.version.outputs.version }}
+          generate_release_notes: true
+
+  publish:
+    needs: [build-matrix, version]
+    if: ${{ needs.build-matrix.outputs.available_images != '[]' }}
+    uses: maandr/github-actions/.github/workflows/cd-ghcr.yaml@v3
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ${{ fromJson(needs.build-matrix.outputs.available_images) }}
+    with:
+      tags: ghcr.io/${{ github.repository }}/${{ matrix.image }}:${{ needs.version.outputs.version }},ghcr.io/${{ github.repository }}/${{ matrix.image }}:${{ needs.version.outputs.version_minor }},ghcr.io/${{ github.repository }}/${{ matrix.image }}:${{ needs.version.outputs.version_major }}
+      labels: ${{ needs.version.outputs.version }},${{ needs.version.outputs.version_minor }},${{ needs.version.outputs.version_major }}
+      file: ./${{ matrix.image }}/Dockerfile
+      context: ./${{ matrix.image }}
+    secrets:
+      GHCR_PAT: ${{ secrets.CONTAINER_REGISTRY_PAT }}
