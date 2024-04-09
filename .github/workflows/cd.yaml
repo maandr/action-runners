@@ -3,7 +3,7 @@ on:
   push:
     branches: [ main ]
     paths:
-      - "**/Dockerfile"
+      - "version"
   workflow_dispatch:
 
 concurrency:
@@ -11,6 +11,41 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "🧮 Get Release Version"
+        shell: bash
+        run: |
+          version=$(cat version)
+          version_minor=${version%.*}
+          version_major=${version%%.*}
+
+          echo "VERSION=$version" >> $GITHUB_ENV
+          echo "VERSION_MINOR=$version_minor" >> $GITHUB_ENV
+          echo "VERSION_MAJOR=$version_major" >> $GITHUB_ENV
+
+      - name: "🏷️ Create Git Tags"
+        shell: bash
+        run: |
+          git tag --force ${{ env.VERSION }}
+          git tag --force ${{ env.VERSION_MINOR }}
+          git tag --force ${{ env.VERSION_MAJOR }}
+          git push --tags --force
+
+      - name: "🚀 Create GitHub Release"
+        uses: softprops/action-gh-release@v2.0.4
+        with:
+          tag_name: ${{ env.VERSION }}
+          name: ${{ env.VERSION }}
+          generate_release_notes: true
+
+  image-tags:
+    needs: [release]
+    uses: maandr/github-actions/.github/workflows/cd-generate-image-tags.yaml@v3
+    with:
+      image: ghcr.io/${{ github.repository }}
+
   build-matrix:
     runs-on: ubuntu-latest
     outputs:
@@ -28,13 +63,8 @@ jobs:
           echo "$hits"
           echo "available_images=$hits" >> "$GITHUB_OUTPUT"
 
-  image-tags:
-    uses: maandr/github-actions/.github/workflows/cd-generate-image-tags.yaml@v3
-    with:
-      image: ghcr.io/${{ github.repository }}
-
   build-and-push:
-    needs: [generate-image-tags, build-matrix]
+    needs: [image-tags, build-matrix]
     if: ${{ needs.build-matrix.outputs.available_images != '[]' }}
     uses: maandr/github-actions/.github/workflows/cd-ghcr.yaml@v3
     strategy:
@@ -42,8 +72,8 @@ jobs:
       matrix:
         image_dir: ${{ fromJson(needs.build-matrix.outputs.available_images) }}
     with:
-      tags: ${{ needs.generate-image-tags.outputs.tags }}
-      labels: ${{ needs.generate-image-tags.outputs.labels }}
+      tags: ${{ needs.image-tags.outputs.tags }}
+      labels: ${{ needs.image-tags.outputs.labels }}
       file: ./${{ matrix.image_dir }}/Dockerfile
       context: ./${{ matrix.image_dir }}
     secrets:
