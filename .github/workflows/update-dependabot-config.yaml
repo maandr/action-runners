@@ -17,6 +17,6 @@ concurrency:
 
 jobs:
   generate-dependabot-config:
-    uses: maandr/github-actions/.github/workflows/gh-dependabot-config.yaml@v1
+    uses: maandr/github-actions/.github/workflows/gh-dependabot-config.yaml@v3
     with:
       schedule: weekly
