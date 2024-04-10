@@ -10,6 +10,7 @@ ARG VERSION_YQ=4.43.1
 RUN apt update && apt install -y \
     apt-transport-https \
     curl \
+    git \
     gnupg2 \
     lsb-release \
     sudo
