@@ -35,5 +35,9 @@ RUN sudo curl -sSL -o /usr/local/bin/jq https://github.com/jqlang/jq/releases/do
 RUN sudo curl -sSL https://github.com/mikefarah/yq/releases/download/v${VERSION_YQ}/yq_linux_amd64.tar.gz \
     | sudo tar zxf - -C /usr/local/bin && sudo mv /usr/local/bin/yq_linux_amd64 /usr/local/bin/yq
 
+# install krmc
+COPY ./krmc.sh /usr/local/bin/
+RUN sudo ln -s /usr/local/bin/krmc.sh /usr/local/bin/krmc
+
 # set timezone
 ENV TZ="Europe/Berlin"
