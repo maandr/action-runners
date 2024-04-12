@@ -29,7 +29,8 @@ jobs:
           git fetch origin main
           hits=""
           for file in $(git diff --name-only origin/main HEAD); do
-            if [ "$(basename "$file")" == "Dockerfile" ]; then
+            dir=$(dirname "$file")
+            if [ -e "$dir/Dockerfile" ] && [ $(basename "$file") != "README.md" ]; then
               hits+="'$(dirname "$file")', "
             fi
           done
