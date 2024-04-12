@@ -148,7 +148,6 @@ user_manual() {
   echo
   echo "Flags:"
   printf "  --kubernetes-version\t\tThe kubernetes version to validate against. (default: 1.27.4)\n"
-  printf "  --kustomize-load-restrictor\tThe kustomize load restrictor to use. (default: LoadRestrictionsNone)\n"
   printf "  --kustomize-flags\t\tThe kustomize flags to use. (default: --load-restrictor=LoadRestrictionsNone)\n"
   printf "  --trivy-severity\t\tThe trivy severity to fail on. (default: HIGH,CRITICAL,MEDIUM)\n"
   printf "  --trivy-ignorefile\t\tThe trivy ignorefile to use. (default: .trivyignore)\n"
@@ -159,14 +158,13 @@ user_manual() {
 print_settings() {
   purple "KRMC (Kubernetes Resource Model Checker):"
   echo
-  printf "command:\t\t\t%s\n" "$command"
-  printf "working dir:\t\t\t%s\n" "${working_dir[@]}"
+  printf "command:\t\t%s\n" "$command"
+  printf "working dir:\t\t%s\n" "${working_dir[@]}"
   echo
-  printf "kubernetes-version:\t\t%s\n" "$kubernetes_version"
-  printf "kustomize-load-restrictor:\t%s\n" "$kustomize_load_restrictor"
-  printf "kustomize-flags:\t\t\t%s\n" "$kustomize_flags"
-  printf "trivy-severity:\t\t\t%s\n" "$trivy_severity"
-  printf "trivy-ignorefile:\t\t%s\n" "$trivy_ignorefile"
+  printf "kubernetes-version:\t%s\n" "$kubernetes_version"
+  printf "kustomize-flags:\t%s\n" "$kustomize_flags"
+  printf "trivy-severity:\t\t%s\n" "$trivy_severity"
+  printf "trivy-ignorefile:\t%s\n" "$trivy_ignorefile"
   echo
 }
 
@@ -176,7 +174,6 @@ main() {
   # options
   export command="help"
   export working_dir=()
-  export kustomize_load_restrictor="LoadRestrictionsNone"
   export kustomize_flags="--load-restrictor=LoadRestrictionsNone"
   export kubernetes_version="1.27.4"
   export trivy_severity="HIGH,CRITICAL,MEDIUM"
@@ -205,10 +202,6 @@ main() {
     case $arg in
       --kubernetes-version=*)
         kubernetes_version="${arg#*=}"
-        shift # past argument=value
-        ;;
-      --kustomize-load-restrictor=*)
-        kustomize_load_restrictor="${arg#*=}"
         shift # past argument=value
         ;;
       --kustomize-flags=*)
