@@ -175,7 +175,7 @@ print_settings() {
 main() {
   set_exit_code 0
 
-  # options
+  # options1
   export command="help"
   export working_dir="."
   export kustomize_load_restrictor="LoadRestrictionsNone"
