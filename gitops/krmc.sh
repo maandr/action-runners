@@ -163,7 +163,7 @@ print_settings() {
   purple "KRMC (Kubernetes Resource Model Checker):"
   echo
   printf "command:\t\t\t%s\n" "$command"
-  printf "working dir:\t\t\t%s\n" "$working_dir"
+  printf "working dir:\t\t\t%s\n" "${working_dir[@]}"
   echo
   printf "kubernetes-version:\t\t%s\n" "$kubernetes_version"
   printf "kustomize-load-restrictor:\t%s\n" "$kustomize_load_restrictor"
@@ -177,17 +177,30 @@ main() {
 
   # options
   export command="help"
-  export working_dir="."
+  export working_dir=()
   export kustomize_load_restrictor="LoadRestrictionsNone"
   export kubernetes_version="1.27.4"
   export trivy_severity="HIGH,CRITICAL,MEDIUM"
   export trivy_ignorefile=".trivyignore"
   export verbose="false"
+  export ignored_dirs=".github"
 
   # parse command
   command=$1
+
   # parse working dir
-  working_dir=${2%/}
+  if [[ "$2" =~ ^- ]]; then
+    user_manual
+    exit 1
+  fi
+  IFS=',' read -r -a working_dir <<< "$2"
+
+  # Loop through the working_dir and remove trailing slash and leading ./ if present
+  for i in "${!working_dir[@]}"; do
+      working_dir[$i]=${working_dir[$i]%/}
+      working_dir[$i]=${working_dir[$i]#./}
+  done
+
   # parse flags
   for arg in "$@"; do
     case $arg in
@@ -226,16 +239,12 @@ main() {
 
   [ "$verbose" == "true" ] && print_settings
 
-  if [ "$command" == "build" ]; then
-      build "$working_dir"
-  elif [ "$command" == "validate" ]; then
-      validate "$working_dir"
-  elif [ "$command" == "lint" ]; then
-      lint "$working_dir"
-  elif [ "$command" == "check" ]; then
-      build "$working_dir"
-      validate "$working_dir"
-      lint "$working_dir"
+  if [[ "$command" =~ ^(build|check|lint|validate) ]]; then
+      for dir in "${working_dir[@]}"; do
+        [ "$command" == "check" ] || [ "$command" == "build" ] && build "$dir"
+        [ "$command" == "check" ] || [ "$command" == "validate" ] && validate "$dir"
+        [ "$command" == "check" ] || [ "$command" == "lint" ] && lint "$dir"
+      done
   elif [ "$command" == "help" ]; then
       user_manual
   else
