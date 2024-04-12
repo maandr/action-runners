@@ -2,7 +2,7 @@
 
 The runner includes useful tools necessary for GitOps projects.
 
-## Available Tools1
+## Available Tools
 
 - jq
 - krmc

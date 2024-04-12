@@ -184,7 +184,7 @@ main() {
   export trivy_ignorefile=".trivyignore"
   export verbose="false"
 
-  # parse command
+  # parse command1
   command=$1
   # parse working dir
   working_dir=${2%/}
