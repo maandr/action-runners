@@ -5,6 +5,7 @@ set -o errexit
 color_red='\033[0;31m'
 color_green='\033[0;32m'
 color_purple='\033[1;35m'
+color_grey='\033[90m'
 color_reset='\033[0m'
 
 red() {
@@ -27,6 +28,12 @@ ok() {
   green " [OK]\n"
 }
 
+debug() {
+  if [ "$debug" == "true" ]; then
+    printf "${color_grey}[debug] $1${color_reset}\n"
+  fi
+}
+
 set_exit_code() {
   echo "$1" > /tmp/kubeml_exit_code
 }
@@ -36,98 +43,124 @@ get_exit_code() {
 }
 
 find_kustomization_files() {
-  find "$1" -type f \( -name "kustomization.yaml" -o -name "kustomization.yml" \) -print0
+  find_command="find \"$1\" -type f \( -name \"kustomization.yaml\" -o -name \"kustomization.yml\" \)"
+
+  if [ ${#ignored_dirs[@]} -eq 0 ]; then
+    eval "$find_command"
+  else
+    local ignore_pattern=""
+
+    for dir in $ignored_dirs; do
+      ignore_pattern+="\|$dir"
+    done
+    eval "$find_command" | grep -v ".*\(${ignore_pattern:2}\).*"
+  fi
 }
 
-# Build
 build() {
-  find_kustomization_files "$1" | while IFS= read -r -d $'\0' file;
-    do
-      working_dir=$(dirname "$file")
+  local kustomize_flags=(
+    "--load-restrictor" $kustomize_load_restrictor
+  )
 
-      printf "[build] "
-      purple "$working_dir"
+  for file in $(find_kustomization_files "$1"); do
+    working_dir=$(dirname "$file")
 
-      set +e
-      output=$(kustomize build "$working_dir" "$kustomize_flags" 2>&1)
-      outcome=${PIPESTATUS[0]}
-      set -e
+    kustomize_command="kustomize build $working_dir ${kustomize_flags[*]}"
+    debug "$kustomize_command"
 
-      if [ "$outcome" -ne 0 ]; then
-        failed
-        echo "$output"
-        set_exit_code 1
-      else
-        ok
-      fi
+    printf "[build] "
+    purple "$working_dir"
+
+    set +e
+    output=$(eval "$kustomize_command" 2>&1)
+    outcome=${PIPESTATUS[0]}
+    set -e
+
+    if [ "$outcome" -ne 0 ]; then
+      failed
+      echo "$output"
+      set_exit_code 1
+    else
+      ok
+    fi
   done
 }
 
-# Validate
 validate() {
-  kubeconform_flags=(
+  local kubeconform_flags=(
     "-strict"
     "-ignore-missing-schemas"
     "-kubernetes-version" "$kubernetes_version"
     "-schema-location" "default"
-    "-schema-location" "https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json"
     "-summary"
-    "-ignore-filename-pattern" ".*gotk-.*"
-    "-ignore-filename-pattern" ".*.sops.yaml"
-    "-skip" "Secret"
   )
 
-  find_kustomization_files "$1" | while IFS= read -r -d $'\0' file;
-    do
-      working_dir=$(dirname "$file")
+  for pattern in "${kubeconform_ignore_filename_patterns[@]}"; do
+    kubeconform_flags+=("-ignore-filename-pattern" "$pattern")
+  done
 
-      printf "[validate] "
-      purple "$working_dir"
+  for kind in "${kubeconform_skip_resources[@]}"; do
+    kubeconform_flags+=("-skip" "$kind")
+  done
 
-      errors=$(kubeconform "${kubeconform_flags[@]}" -output json "$working_dir" | jq '.summary.errors')
-      invalids=$(kubeconform "${kubeconform_flags[@]}" -output json "$working_dir" | jq '.summary.invalid')
+  for file in $(find_kustomization_files "$1"); do
+    working_dir=$(dirname "$file")
 
-      if [ "$((errors + invalids))" -ne 0 ]; then
-        failed
-        set +e
-        kubeconform "${kubeconform_flags[@]}" -output text "$working_dir"
-        set -e
-        set_exit_code 1
-      else
-        ok
-      fi
+    kubeconform_command="kubeconform ${kubeconform_flags[*]} -output text $working_dir"
+    debug "$kubeconform_command"
+
+    printf "[validate] "
+    purple "$working_dir"
+
+    kubeconform_command_json=${kubeconform_command//-output text/-output json}
+    errors=$(eval "$kubeconform_command_json | jq '.summary.errors'")
+    invalids=$(eval "$kubeconform_command_json | jq '.summary.invalid'")
+
+    if [ "$((errors + invalids))" -ne 0 ]; then
+      failed
+      set +e
+      eval "$kubeconform_command"
+      set -e
+      set_exit_code 1
+    else
+      ok
+    fi
   done
 }
 
-# Lint
 lint() {
-  trivy_flags=(
+  local trivy_flags=(
     "--quiet"
     "--k8s-version" "$kubernetes_version"
     "--exit-code" "1"
     "--ignorefile" "$trivy_ignorefile"
     "--severity" "$trivy_severity"
   )
+  for ignored_dir in "${ignored_dirs[@]}"; do
+    trivy_flags+=("--skip-dirs" "$ignored_dir")
+  done
 
-  find_kustomization_files "$1" | while IFS= read -r -d $'\0' file;
-    do
-      working_dir=$(dirname "$file")
+  for file in $(find_kustomization_files "$1"); do
+    working_dir=$(dirname "$file")
 
-      printf "[lint] "
-      purple "$working_dir"
+    trivy_command="trivy config ${trivy_flags[*]} $working_dir"
+    debug "$trivy_command"
 
-      set +e
-      output=$(trivy config "${trivy_flags[@]}" "$working_dir")
-      outcome=${PIPESTATUS[0]}
-      set -e
+    printf "[lint] "
+    purple "$working_dir"
 
-      if [ "$outcome" -ne 0 ]; then
-        failed
-        printf "%s" "$output"
-        set_exit_code 1
-      else
-        ok
-      fi
+    set +e
+    output=$(eval "$trivy_command")
+    outcome=${PIPESTATUS[0]}
+    set -e
+
+    if [ "$outcome" -ne 0 ]; then
+      failed
+      printf "%s" "$output"
+      set_exit_code 1
+    else
+      ok
+    fi
   done
 }
 
@@ -147,39 +180,43 @@ user_manual() {
   printf "  validate\tValidates all kustomizations found under the given directory using kubeconform.\n"
   echo
   echo "Flags:"
-  printf "  --kubernetes-version\t\tThe kubernetes version to validate against. (default: 1.27.4)\n"
-  printf "  --kustomize-flags\t\tThe kustomize flags to use. (default: --load-restrictor=LoadRestrictionsNone)\n"
-  printf "  --trivy-severity\t\tThe trivy severity to fail on. (default: HIGH,CRITICAL,MEDIUM)\n"
-  printf "  --trivy-ignorefile\t\tThe trivy ignorefile to use. (default: .trivyignore)\n"
-  printf "  --help\t\t\tHelp for krmc usage.\n"
-  printf "  -v, --verbose\t\t\tEnable verbose output.\n"
+  printf "  --ignore-dirs\t\t\t\t\tA comma-separated list of directories to ignore (default: none)\n"
+  printf "  --kubeconform-ignore-filename-patterns\tA comma-separated list of regular expression specifying paths that kubeconform will ignore (default: none)\n"
+  printf "  --kubeconform-skip-resources\t\t\tA comma-separated list of kinds or GVKs kubeconform will ignore (default: none)\n"
+  printf "  --kubernetes-version\t\t\t\tThe kubernetes version to validate against (default: 1.27.4)\n"
+  printf "  --trivy-severity\t\t\t\tThe trivy severity to fail on (default: HIGH,CRITICAL,MEDIUM)\n"
+  printf "  --trivy-ignorefile\t\t\t\tThe trivy ignorefile to use (default: .trivyignore)\n"
+  printf "  --help\t\t\t\t\tHelp for krmc usage\n"
+  printf "  --verbose\t\t\t\t\tEnable verbose output\n"
+  printf "  --debug\t\t\t\t\tEnable debug output\n"
 }
 
 print_settings() {
   purple "KRMC (Kubernetes Resource Model Checker):"
   echo
   printf "command:\t\t%s\n" "$command"
-  printf "working dir:\t\t%s\n" "${working_dir[@]}"
-  echo
-  printf "kubernetes-version:\t%s\n" "$kubernetes_version"
-  printf "kustomize-flags:\t%s\n" "$kustomize_flags"
-  printf "trivy-severity:\t\t%s\n" "$trivy_severity"
-  printf "trivy-ignorefile:\t%s\n" "$trivy_ignorefile"
+  printf "working dir:\t\t%s\n" "${working_dir[*]}"
+  printf "ignored dirs:\t\t%s\n" "${ignored_dirs[*]}"
   echo
 }
 
 main() {
   set_exit_code 0
 
-  # options
+  # default values
   export command="help"
   export working_dir=()
-  export kustomize_flags="--load-restrictor=LoadRestrictionsNone"
+  export ignored_dirs=()
+
+  export kubeconform_ignore_filename_patterns=()
+  export kubeconform_skip_resources=()
   export kubernetes_version="1.27.4"
-  export trivy_severity="HIGH,CRITICAL,MEDIUM"
+  export kustomize_load_restrictor="LoadRestrictionsNone"
   export trivy_ignorefile=".trivyignore"
+  export trivy_severity="HIGH,CRITICAL,MEDIUM"
+
   export verbose="false"
-  export ignored_dirs=".github"
+  export debug="false"
 
   # parse command
   command=$1
@@ -200,29 +237,46 @@ main() {
   # parse flags
   for arg in "$@"; do
     case $arg in
+      --ignore-dirs=*)
+        IFS=',' read -r -a ignored_dirs <<< "${arg#*=}"
+        shift
+        ;;
+      --kubeconform-ignore-filename-patterns=*)
+        IFS=',' read -r -a kubeconform_ignore_filename_patterns <<< "${arg#*=}"
+        shift
+        ;;
+      --kubeconform-skip-resources=*)
+        IFS=',' read -r -a kubeconform_skip_resources <<< "${arg#*=}"
+        shift
+        ;;
       --kubernetes-version=*)
         kubernetes_version="${arg#*=}"
-        shift # past argument=value
+        shift
         ;;
-      --kustomize-flags=*)
-        kustomize_flags="${arg#*=}"
-        shift # past argument=value
-        ;;
-      --trivy-severity=*)
-        trivy_severity="${arg#*=}"
-        shift # past argument=value
+      --kustomize-load-restrictor=*)
+        kustomize_load_restrictor="${arg#*=}"
+        shift
         ;;
       --trivy-ignorefile=*)
         trivy_ignorefile="${arg#*=}"
-        shift # past argument=value
+        shift
         ;;
-      -v|--verbose)
+      --trivy-severity=*)
+        trivy_severity="${arg#*=}"
+        shift
+        ;;
+      --verbose)
         verbose="true"
-        shift # past argument=value
+        shift
+        ;;
+      --debug)
+        verbose="true"
+        debug="true"
+        shift
         ;;
       --help)
         command="help"
-        shift # past argument=value
+        shift
         ;;
       -*|--*)
         echo "Unknown option $arg"
