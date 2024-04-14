@@ -29,7 +29,9 @@ ok() {
 }
 
 debug() {
-  [ "$debug" == "true" ] && printf "${color_grey}[debug] $1${color_reset}\n"
+  if [ "$debug" == "true" ]; then
+    printf "${color_grey}[debug] $1${color_reset}\n"
+  fi
 }
 
 set_exit_code() {
@@ -90,7 +92,6 @@ validate() {
     "-ignore-missing-schemas"
     "-kubernetes-version" "$kubernetes_version"
     "-schema-location" "default"
-    #"-schema-location" "https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json"
     "-summary"
   )
 
@@ -111,8 +112,9 @@ validate() {
     printf "[validate] "
     purple "$working_dir"
 
-    errors=$(kubeconform "${kubeconform_flags[@]}" -output json "$working_dir" | jq '.summary.errors')
-    invalids=$(kubeconform "${kubeconform_flags[@]}" -output json "$working_dir" | jq '.summary.invalid')
+    kubeconform_command_json=${kubeconform_command//-output text/-output json}
+    errors=$(eval "$kubeconform_command_json | jq '.summary.errors'")
+    invalids=$(eval "$kubeconform_command_json | jq '.summary.invalid'")
 
     if [ "$((errors + invalids))" -ne 0 ]; then
       failed
