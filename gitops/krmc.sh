@@ -92,6 +92,7 @@ validate() {
     "-ignore-missing-schemas"
     "-kubernetes-version" "$kubernetes_version"
     "-schema-location" "default"
+    "-schema-location" "https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json"
     "-summary"
   )
 
