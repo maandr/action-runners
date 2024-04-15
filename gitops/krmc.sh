@@ -87,6 +87,9 @@ build() {
 }
 
 validate() {
+  local kustomize_flags=(
+    "--load-restrictor" $kustomize_load_restrictor
+  )
   local kubeconform_flags=(
     "-strict"
     "-ignore-missing-schemas"
@@ -107,7 +110,7 @@ validate() {
   for file in $(find_kustomization_files "$1"); do
     working_dir=$(dirname "$file")
 
-    kubeconform_command="kubeconform ${kubeconform_flags[*]} -output text $working_dir"
+    kubeconform_command="kustomize build $working_dir ${kustomize_flags[*]} | kubeconform ${kubeconform_flags[*]} -output text"
     debug "$kubeconform_command"
 
     printf "[validate] "
