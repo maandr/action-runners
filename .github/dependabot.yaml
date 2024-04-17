@@ -6,10 +6,14 @@ updates:
     schedule:
       interval: weekly
   - package-ecosystem: docker
-    directory: ./node
+    directory: ./golang
     schedule:
       interval: weekly
   - package-ecosystem: docker
     directory: ./gitops
+    schedule:
+      interval: weekly
+  - package-ecosystem: docker
+    directory: ./node
     schedule:
       interval: weekly
