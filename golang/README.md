@@ -6,3 +6,4 @@ The runner includes useful tools necessary for Golang projects.
 
 - go
 - staticcheck
+- gcc
