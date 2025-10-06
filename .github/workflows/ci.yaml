@@ -20,7 +20,7 @@ jobs:
       changed_images: ${{ steps.build-matrix.outputs.changed_images }}
     steps:
       - name: "⏬ Checkout Git Repository"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: "🤖 Generate build matrix"
         id: build-matrix
