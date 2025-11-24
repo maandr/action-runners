@@ -20,7 +20,7 @@ jobs:
       available_images: ${{ steps.build-matrix.outputs.available_images }}
     steps:
       - name: "⏬ Checkout Git Repository"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: "🤖 Detect docker images"
         id: build-matrix
@@ -42,7 +42,7 @@ jobs:
       version_major: ${{ steps.get-version.outputs.version_major }}
     steps:
       - name: "⏬ Checkout Git Repository"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: "🧮 Get Release Version"
         id: get-version
@@ -61,7 +61,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: "⏬ Checkout Git Repository"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: "🏷️ Create Git Tags"
         shell: bash
